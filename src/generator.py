@@ -4,8 +4,8 @@ from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.documents import Document
 
 class TableGenerator:
-    def __init__(self, model_name: str = "gemini-2.5-flash"):
-        # We use gemini-2.5-flash by default
+    def __init__(self, model_name: str = "gemini-3.8-flash"):
+        # We use gemini-3.8-flash by default
         self.llm = ChatGoogleGenerativeAI(model=model_name, temperature=0.0)
         
         self.prompt = ChatPromptTemplate.from_messages([
@@ -29,4 +29,13 @@ class TableGenerator:
         context = "\n---\n".join(context_parts)
         
         response = self.chain.invoke({"context": context, "question": query})
-        return response.content
+        
+        # Handle cases where response.content is a list of blocks instead of a string
+        if isinstance(response.content, list):
+            # Extract text from the first block
+            for block in response.content:
+                if isinstance(block, dict) and block.get("type") == "text":
+                    return block.get("text", "")
+            return str(response.content)
+            
+        return str(response.content)
